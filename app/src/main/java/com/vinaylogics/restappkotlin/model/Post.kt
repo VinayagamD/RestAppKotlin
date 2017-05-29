@@ -11,7 +11,7 @@ import retrofit2.Response
 /**
  * Created by vinaylogics on 25-05-2017.
  */
-class Post(
+data class Post(
 @SerializedName("userId")
 @Expose
 var userId : Int?,
@@ -27,14 +27,39 @@ var body: String?
 ) {
 
 companion object Factory{
-    fun getPost( callBack: ApiCallBack<List<Post>>) {
+    fun getPosts( callBack: ApiCallBack<List<Post>>) {
         val api = ServiceGenerator.createService(PostApi::class.java)
         val call = api.posts
-        queueCall(call,callBack)
+        queueListCall(call,callBack)
 
     }
 
-    private fun queueCall( call: Call<List<Post>> ,  callBack: ApiCallBack<List<Post>>){
+    fun getPost(postId: Int,  callBack: ApiCallBack<Post>){
+        val api = ServiceGenerator.createService(PostApi::class.java)
+        val call = api.post(postId)
+        queueCall(call,callBack)
+    }
+
+
+    private fun queueCall( call: Call<Post> , callBack: ApiCallBack<Post>){
+        call.enqueue(object: Callback<Post>{
+            override fun onFailure(call: Call<Post>?, t: Throwable?) = callBack.onError( null , APIError(APIError.CONNECTION_ERROR, t?.message))
+
+
+            override fun onResponse(call: Call<Post>?, response: Response<Post>?) {
+                if (response?.isSuccessful as Boolean){
+                    callBack.onSuccess(response.body() as Post)
+                }else{
+                    val x : Int = response.code()
+                    when (x){
+                        401 -> callBack.onError(response.body() as  Post , APIError(APIError.NOT_AUTHORIZED, "Un authorized") )
+                        else -> callBack.onError(response.body() as Post , APIError(APIError.RECORD_NOT_FOUND_ERROR, "Not Found") )
+                    }
+                }
+            }
+        })
+    }
+    private fun queueListCall( call: Call<List<Post>> ,  callBack: ApiCallBack<List<Post>>){
         call.enqueue(object: Callback<List<Post>>{
             override fun onResponse(call: Call<List<Post>>?, response: Response<List<Post>>?) {
                 if (response?.isSuccessful as Boolean){
@@ -43,7 +68,7 @@ companion object Factory{
                     val x : Int = response.code()
                    when (x){
                        401 -> callBack.onError(response.body() as  List<Post> , APIError(APIError.NOT_AUTHORIZED, "Un authorized") )
-                       else -> callBack.onError(response.body() as  List<Post> , APIError(APIError.RECORD_NOT_FOUND_ERROR, "Un authorized") )
+                       else -> callBack.onError(response.body() as  List<Post> , APIError(APIError.RECORD_NOT_FOUND_ERROR, "Not Found") )
                    }
                 }
             }

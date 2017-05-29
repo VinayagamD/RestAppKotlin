@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.vinaylogics.restappkotlin.R
+import com.vinaylogics.restappkotlin.listeners.OnRecyclerItemClickListeners
 import com.vinaylogics.restappkotlin.model.Post
 import kotlinx.android.synthetic.main.layout_post_item.view.*
 
@@ -25,17 +26,25 @@ class PostAdapter (val posts: List<Post>): RecyclerView.Adapter<PostAdapter.Post
 
     }
 
+    var onRecyclerViewItemClickListener : OnRecyclerItemClickListeners<PostViewHolder, Post> ? = null
+
     override fun getItemCount() =  posts.size
 
 
     override fun onCreateViewHolder(parent: ViewGroup, position : Int)= PostViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.layout_post_item,parent,false))
 
 
-    class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
      val userIdTextView = itemView.userIdTextView
      val idTextView = itemView.idTextView
      val  titleTextView = itemView.titleTextView
      val bodyTextView = itemView.bodyTextView
+
+        init {
+            itemView.setOnClickListener { v-> onRecyclerViewItemClickListener?.onRecyclerItemClick(this, v, posts[adapterPosition], adapterPosition ) }
+        }
+
+
 
     }
 }
